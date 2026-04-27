@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IsoMorph — Skeletal Isomer Drawing Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Fraunces:ital,wght@0,300;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d0d; --bg2:#131313; --bg3:#1a1a1a; --bg4:#222;
+  --border:#2a2a2a; --border2:#363636;
+  --ink:#e8e4dc; --ink2:#8a8480; --ink3:#4a4642;
+  --lime:#b8e000; --lime2:#8aaa00;
+  --red:#ff4d4d; --green:#3dcc7e; --amber:#f0a030;
+  --mono:'Space Mono',monospace; --serif:'Fraunces',serif;
+  --r:5px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);min-height:100vh;overflow-x:hidden;}
+
+/* ─── NAV ─────────────────────────────────── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:52px;border-bottom:1px solid var(--border);
+  background:var(--bg);position:sticky;top:0;z-index:200;
+}
+.logo{font-family:var(--serif);font-size:22px;font-style:italic;color:var(--lime);letter-spacing:-0.5px;}
+.logo em{color:var(--ink2);font-style:normal;}
+.nav-tabs{display:flex;gap:2px;}
+.ntab{
+  padding:6px 16px;border:1px solid transparent;border-radius:var(--r);
+  background:transparent;color:var(--ink3);font-family:var(--mono);font-size:11px;
+  cursor:pointer;transition:.12s;letter-spacing:.5px;
+}
+.ntab:hover{color:var(--ink2);border-color:var(--border2);}
+.ntab.on{color:var(--lime);border-color:var(--lime);background:rgba(184,224,0,.06);}
+
+/* ─── PAGES ───────────────────────────────── */
+.page{display:none;}
+.page.on{display:block;}
+
+/* ─── HOME ────────────────────────────────── */
+.home{max-width:860px;margin:0 auto;padding:72px 28px 60px;text-align:center;}
+.home-eyebrow{font-size:10px;letter-spacing:2px;color:var(--lime);margin-bottom:20px;text-transform:uppercase;}
+.home-title{font-family:var(--serif);font-size:clamp(52px,10vw,100px);font-weight:300;line-height:.95;color:var(--ink);margin-bottom:8px;letter-spacing:-2px;}
+.home-title i{color:var(--lime);font-style:italic;}
+.home-sub{font-size:13px;color:var(--ink2);max-width:480px;margin:24px auto 40px;line-height:1.8;}
+.play-btn{
+  display:inline-block;padding:13px 40px;background:var(--lime);color:#0d0d0d;
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;
+  border:none;border-radius:var(--r);cursor:pointer;transition:.15s;text-transform:uppercase;
+}
+.play-btn:hover{background:var(--lime2);transform:translateY(-1px);}
+.home-stats{
+  display:flex;gap:0;justify-content:center;margin-top:64px;
+  border:1px solid var(--border);border-radius:var(--r);overflow:hidden;
+}
+.hstat{flex:1;padding:20px 12px;text-align:center;border-right:1px solid var(--border);}
+.hstat:last-child{border-right:none;}
+.hstat-n{font-family:var(--serif);font-size:36px;font-weight:300;color:var(--lime);}
+.hstat-l{font-size:9px;letter-spacing:1.5px;color:var(--ink3);margin-top:4px;text-transform:uppercase;}
+
+/* ─── RULES ───────────────────────────────── */
+.rules{max-width:720px;margin:0 auto;padding:48px 28px;}
+.rules h1{font-family:var(--serif);font-size:36px;font-weight:300;font-style:italic;color:var(--lime);margin-bottom:4px;}
+.rules .sub{font-size:12px;color:var(--ink3);margin-bottom:40px;}
+.rsec{margin-bottom:32px;}
+.rsec h2{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.rsec p,.rsec li{font-size:13px;color:var(--ink2);line-height:1.9;font-family:var(--serif);}
+.rsec ul{padding-left:18px;}
+.rsec li{margin-bottom:4px;}
+.rsec li b{color:var(--ink);font-family:var(--mono);font-size:11px;}
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;margin-top:10px;}
+.hcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.hcard-n{font-size:28px;font-weight:300;color:var(--lime);opacity:.35;font-family:var(--serif);line-height:1;}
+.hcard h3{font-size:11px;letter-spacing:.5px;color:var(--ink);margin:8px 0 6px;}
+.hcard p{font-size:12px;color:var(--ink2);line-height:1.7;font-family:var(--serif);}
+.rtable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+.rtable th{text-align:left;padding:7px 10px;color:var(--ink3);font-size:10px;letter-spacing:.5px;border-bottom:1px solid var(--border);font-family:var(--mono);}
+.rtable td{padding:7px 10px;color:var(--ink2);border-bottom:1px solid var(--border);font-family:var(--serif);}
+.rtable td:first-child{font-family:var(--mono);color:var(--lime);font-size:11px;}
+.rules-cta{margin-top:36px;}
+
+/* ─── GAME LAYOUT ─────────────────────────── */
+.game-wrap{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 52px);}
+.sidebar{
+  background:var(--bg2);border-right:1px solid var(--border);
+  padding:18px 16px;display:flex;flex-direction:column;gap:14px;
+  overflow-y:auto;position:sticky;top:52px;height:calc(100vh - 52px);
+}
+.slabel{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);margin-bottom:7px;}
+.score-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;}
+.score-big{font-family:var(--serif);font-size:48px;font-weight:300;color:var(--lime);line-height:1;}
+.score-lbl{font-size:9px;letter-spacing:1.5px;color:var(--ink3);text-transform:uppercase;margin-top:2px;}
+.prog-bar-bg{background:var(--bg3);border-radius:100px;height:3px;}
+.prog-bar{height:3px;background:var(--lime);border-radius:100px;transition:width .4s;}
+.prog-lbl{font-size:10px;color:var(--ink3);margin-top:5px;}
+.mini-row{display:flex;justify-content:space-between;font-size:11px;color:var(--ink2);padding:4px 0;border-bottom:1px solid var(--border);}
+.mini-row:last-child{border:none;}
+.mini-row span:last-child{color:var(--ink);}
+.fpick{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--ink);font-family:var(--mono);font-size:10px;padding:7px 9px;border-radius:var(--r);cursor:pointer;appearance:none;}
+.fpick option{background:var(--bg3);}
+.sbtn{
+  width:100%;padding:8px;font-family:var(--mono);font-size:10px;letter-spacing:.5px;
+  border-radius:var(--r);cursor:pointer;transition:.12s;border:1px solid var(--border2);
+  text-transform:uppercase;
+}
+.sbtn.primary{background:var(--lime);color:#0d0d0d;border-color:var(--lime);font-weight:700;}
+.sbtn.primary:hover{background:var(--lime2);}
+.sbtn.ghost{background:transparent;color:var(--ink2);}
+.sbtn.ghost:hover{border-color:var(--ink2);color:var(--ink);}
+.thumbs{display:flex;flex-wrap:wrap;gap:5px;}
+.thumb{border:1px solid var(--border2);border-radius:3px;overflow:hidden;cursor:pointer;transition:border-color .12s;}
+.thumb:hover{border-color:var(--lime);}
+.thumb-lbl{font-size:8px;color:var(--ink3);text-align:center;padding:2px 3px;font-family:var(--mono);}
+.empty-msg{font-size:10px;color:var(--ink3);}
+
+/* ─── GAME MAIN ───────────────────────────── */
+.gmain{padding:18px 20px;display:flex;flex-direction:column;gap:12px;}
+.gtop{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.formula-big{font-family:var(--serif);font-size:32px;font-weight:300;color:var(--ink);}
+.formula-hint{font-size:10px;color:var(--ink3);margin-top:2px;letter-spacing:.3px;}
+.gtag{font-size:9px;letter-spacing:2px;color:var(--lime);border:1px solid rgba(184,224,0,.3);border-radius:100px;padding:4px 12px;text-transform:uppercase;}
+
+/* ─── TOOLBAR ─────────────────────────────── */
+.toolbar{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:9px 12px;
+}
+.tsep{width:1px;height:20px;background:var(--border2);margin:0 3px;}
+.tlbl{font-size:9px;letter-spacing:1.5px;color:var(--ink3);text-transform:uppercase;}
+.tbtn{
+  padding:5px 11px;border:1px solid var(--border2);border-radius:3px;
+  background:transparent;color:var(--ink2);font-family:var(--mono);font-size:11px;
+  cursor:pointer;transition:.12s;white-space:nowrap;
+}
+.tbtn:hover{border-color:var(--ink2);color:var(--ink);}
+.tbtn.on{background:var(--lime);color:#0d0d0d;border-color:var(--lime);font-weight:700;}
+.tbtn.atom{min-width:34px;text-align:center;}
+
+/* ─── CANVAS AREA ─────────────────────────── */
+.canvas-wrap{
+  border:1px solid var(--border);border-radius:var(--r);
+  background:var(--bg2);position:relative;overflow:hidden;
+}
+#mc{display:block;width:100%;touch-action:none;}
+.canvas-hint-overlay{
+  position:absolute;bottom:10px;right:12px;
+  font-size:9px;color:var(--ink3);letter-spacing:.5px;pointer-events:none;
+}
+
+/* ─── ACTIONS ─────────────────────────────── */
+.actions{display:flex;gap:7px;flex-wrap:wrap;}
+.abtn{
+  padding:8px 18px;border:1px solid var(--border2);border-radius:var(--r);
+  font-family:var(--mono);font-size:11px;cursor:pointer;transition:.12s;
+  background:transparent;color:var(--ink2);letter-spacing:.3px;
+}
+.abtn:hover{border-color:var(--ink2);color:var(--ink);}
+.abtn.primary{background:var(--lime);color:#0d0d0d;border-color:var(--lime);font-weight:700;}
+.abtn.primary:hover{background:var(--lime2);}
+
+/* ─── FEEDBACK ────────────────────────────── */
+.feedback{
+  padding:10px 14px;border-radius:var(--r);font-size:11px;
+  border:1px solid var(--border);color:var(--ink2);min-height:38px;
+  display:flex;align-items:center;gap:8px;letter-spacing:.2px;
+}
+.feedback.ok{border-color:var(--green);color:var(--green);background:rgba(61,204,126,.05);}
+.feedback.err{border-color:var(--red);color:var(--red);background:rgba(255,77,77,.05);}
+.feedback.info{border-color:var(--amber);color:var(--amber);background:rgba(240,160,48,.05);}
+
+/* ─── LIVE COUNTS ─────────────────────────── */
+.live-counts{
+  display:flex;gap:8px;flex-wrap:wrap;
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:9px 12px;
+}
+.lc{text-align:center;min-width:56px;}
+.lc-lbl{font-size:9px;color:var(--ink3);letter-spacing:.5px;margin-bottom:3px;}
+.lc-val{font-family:var(--serif);font-size:20px;font-weight:300;}
+.lc-val.ok{color:var(--green);}
+.lc-val.lo{color:var(--amber);}
+.lc-val.hi{color:var(--red);}
+
+/* ─── HOW TO DRAW PANEL ───────────────────── */
+.draw-guide{
+  display:flex;gap:10px;flex-wrap:wrap;
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:9px 12px;font-size:10px;color:var(--ink3);
+}
+.dg-item{display:flex;align-items:center;gap:5px;}
+.dg-key{background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:1px 5px;color:var(--ink2);}
+
+@media(max-width:680px){
+  .game-wrap{grid-template-columns:1fr;}
+  .sidebar{position:static;height:auto;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Iso<em>Morph</em></div>
+  <div class="nav-tabs">
+    <button class="ntab on" onclick="nav('home')">Home</button>
+    <button class="ntab" onclick="nav('rules')">How to Play</button>
+    <button class="ntab" onclick="nav('game')">Play</button>
+  </div>
+</nav>
+
+<!-- ══ HOME ══════════════════════════════════════════════════════════════════ -->
+<div class="page on" id="page-home">
+  <div class="home">
+    <div class="home-eyebrow">Organic Chemistry · Skeletal Structures</div>
+    <h1 class="home-title">Iso<i>Morph</i></h1>
+    <p class="home-sub">Draw bond-line skeletal structures the way chemists actually draw them. Score points for every unique constitutional isomer you find.</p>
+    <button class="play-btn" onclick="nav('game')">Start Drawing →</button>
+    <div class="home-stats">
+      <div class="hstat"><div class="hstat-n">48</div><div class="hstat-l">Formulas</div></div>
+      <div class="hstat"><div class="hstat-n">240+</div><div class="hstat-l">Structures</div></div>
+      <div class="hstat"><div class="hstat-n">10</div><div class="hstat-l">Pts / Isomer</div></div>
+      <div class="hstat"><div class="hstat-n">60°</div><div class="hstat-l">Snap Angle</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RULES ═════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-rules">
+  <div class="rules">
+    <h1>How to Play</h1>
+    <p class="sub">Everything you need to know — including how skeletal drawing works</p>
+
+    <div class="rsec">
+      <h2>// What is a structural isomer?</h2>
+      <p>Structural (constitutional) isomers share the same molecular formula but have different connectivity. Butane (C₄H₁₀) can be a straight chain or branched — same four carbons, completely different structure. This game challenges you to find every valid connectivity for a given formula.</p>
+    </div>
+
+    <div class="rsec">
+      <h2>// Bond-line (skeletal) drawing</h2>
+      <p style="margin-bottom:10px;">In skeletal notation, carbons are <em>implicit</em> at every vertex and endpoint of a zigzag line. You only write labels for heteroatoms (O, N, Cl…) and for H when attached to a heteroatom. This is the standard way chemists draw structures.</p>
+      <div class="how-grid">
+        <div class="hcard"><div class="hcard-n">01</div><h3>Draw a bond</h3><p>Click and drag anywhere on the canvas. The line snaps to 60° angles. Release to place the bond. Carbon is implicit at each endpoint.</p></div>
+        <div class="hcard"><div class="hcard-n">02</div><h3>Extend a chain</h3><p>Drag starting from any existing vertex to continue the chain. The snap keeps your structure in standard zigzag form.</p></div>
+        <div class="hcard"><div class="hcard-n">03</div><h3>Double bonds</h3><p>Click the "Double" button then draw. A second parallel line appears automatically alongside the first.</p></div>
+        <div class="hcard"><div class="hcard-n">04</div><h3>Add heteroatoms</h3><p>Select O, N, Cl etc. from the toolbar. When you drag to a vertex or draw to a new point, that endpoint becomes the chosen atom instead of C.</p></div>
+        <div class="hcard"><div class="hcard-n">05</div><h3>Rings</h3><p>Draw bonds in a closed loop — end your drag on an existing vertex to close the ring. Cyclic structures are valid isomers.</p></div>
+        <div class="hcard"><div class="hcard-n">06</div><h3>Check & score</h3><p>Click "Check Structure" to validate formula, valence, connectivity and uniqueness. Each new valid isomer = 10 pts.</p></div>
+      </div>
+    </div>
+
+    <div class="rsec">
+      <h2>// Validation rules</h2>
+      <ul>
+        <li><b>Formula match</b> — implicit H is calculated from unused valence. No need to draw H's on carbons.</li>
+        <li><b>Connected graph</b> — all atoms must form a single connected structure.</li>
+        <li><b>Valence limits</b> — C(4), O(2), N(3), H(1), halogens(1), S(2). Overvalent atoms are flagged.</li>
+        <li><b>Uniqueness</b> — graph canonicalization detects duplicate connectivity even if drawn at a different angle or position.</li>
+        <li><b>No stereoisomers</b> — cis/trans and R/S are the same structure in this game.</li>
+      </ul>
+    </div>
+
+    <div class="rsec">
+      <h2>// Functional groups reference</h2>
+      <table class="rtable">
+        <tr><th>Group</th><th>What to draw</th><th>Example formula</th></tr>
+        <tr><td>Alkane</td><td>Zigzag of C–C bonds only</td><td>C₄H₁₀</td></tr>
+        <tr><td>Alkene</td><td>One segment as a double bond</td><td>C₄H₈</td></tr>
+        <tr><td>Cycloalkane</td><td>Close a ring of C–C bonds</td><td>C₄H₈</td></tr>
+        <tr><td>Alcohol</td><td>Chain ending in –O vertex</td><td>C₃H₈O</td></tr>
+        <tr><td>Ether</td><td>O between two chain segments</td><td>C₃H₈O</td></tr>
+        <tr><td>Aldehyde</td><td>Terminal C=O (double bond to O at end)</td><td>C₃H₆O</td></tr>
+        <tr><td>Ketone</td><td>Interior C=O</td><td>C₃H₆O</td></tr>
+        <tr><td>Carboxylic acid</td><td>Terminal C with =O and –O</td><td>C₂H₄O₂</td></tr>
+        <tr><td>Amine</td><td>Chain ending in –N vertex</td><td>C₃H₉N</td></tr>
+        <tr><td>Haloalkane</td><td>Chain ending in –Cl, –Br vertex</td><td>C₄H₉Cl</td></tr>
+      </table>
+    </div>
+
+    <div class="rsec">
+      <h2>// Strategy tips</h2>
+      <ul>
+        <li><b>Alkanes:</b> Systematically shorten the longest chain by one and add a methyl branch.</li>
+        <li><b>Degrees of unsaturation:</b> Each ring or double bond costs one DoU. C₄H₈ has 1 DoU — could be a ring or an alkene.</li>
+        <li><b>Heteroatom position:</b> For O-containing formulas, try every position: terminal (alcohol/aldehyde), interior (ether/ketone).</li>
+        <li><b>Rings count:</b> Don't forget cyclic isomers — cyclobutane and but-1-ene are both C₄H₈.</li>
+        <li><b>Snap help:</b> The 60° snap keeps structures tidy. Bonds ≥ 30px register; short accidental drags are ignored.</li>
+      </ul>
+    </div>
+
+    <div class="rules-cta">
+      <button class="play-btn" onclick="nav('game')">Start Playing →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GAME ═══════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-game">
+  <div class="game-wrap">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div>
+        <div class="slabel">Score</div>
+        <div class="score-box">
+          <div class="score-big" id="score-num">0</div>
+          <div class="score-lbl">points</div>
+        </div>
+      </div>
+      <div>
+        <div class="slabel">Progress</div>
+        <div class="prog-bar-bg"><div class="prog-bar" id="prog-bar" style="width:0"></div></div>
+        <div class="prog-lbl" id="prog-lbl">0 of 0 found</div>
+      </div>
+      <div>
+        <div class="mini-row"><span>Formula</span><span id="sb-f">—</span></div>
+        <div class="mini-row"><span>Isomers</span><span id="sb-t">—</span></div>
+        <div class="mini-row"><span>Best</span><span id="sb-b">0</span></div>
+        <div class="mini-row"><span>Streak</span><span id="sb-s">0</span></div>
+      </div>
+      <div>
+        <div class="slabel">Choose Formula</div>
+        <select class="fpick" id="fpick"></select>
+        <div style="height:5px"></div>
+        <button class="sbtn primary" onclick="loadSel()">Load</button>
+        <div style="height:5px"></div>
+        <button class="sbtn ghost" onclick="loadRand()">↻ Random</button>
+      </div>
+      <div style="flex:1">
+        <div class="slabel">Found Structures</div>
+        <div class="thumbs" id="thumbs"></div>
+        <div class="empty-msg" id="empty-msg">None yet — start drawing!</div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="gmain">
+      <div class="gtop">
+        <div>
+          <div class="formula-big" id="f-display">C₄H₁₀</div>
+          <div class="formula-hint" id="f-hint">butane family — 2 isomers</div>
+        </div>
+        <div class="gtag" id="f-tag">ALKANE</div>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <span class="tlbl">Atom</span>
+        <button class="tbtn atom on" data-atom="C">C</button>
+        <button class="tbtn atom" data-atom="H">H</button>
+        <button class="tbtn atom" data-atom="O">O</button>
+        <button class="tbtn atom" data-atom="N">N</button>
+        <button class="tbtn atom" data-atom="S">S</button>
+        <button class="tbtn atom" data-atom="P">P</button>
+        <button class="tbtn atom" data-atom="F">F</button>
+        <button class="tbtn atom" data-atom="Cl">Cl</button>
+        <button class="tbtn atom" data-atom="Br">Br</button>
+        <button class="tbtn atom" data-atom="I">I</button>
+        <div class="tsep"></div>
+        <span class="tlbl">Bond</span>
+        <button class="tbtn on" id="tb-single">—</button>
+        <button class="tbtn" id="tb-double">=</button>
+        <button class="tbtn" id="tb-triple">≡</button>
+        <div class="tsep"></div>
+        <span class="tlbl">Snap</span>
+        <button class="tbtn on" id="tb-snap-auto" title="Auto: picks sp/sp2/sp3 angles based on vertex geometry">Auto</button>
+        <button class="tbtn" id="tb-snap-109" title="Tetrahedral sp3 — 109.5°">109°</button>
+        <button class="tbtn" id="tb-snap-120" title="Trigonal planar sp2 — 120°">120°</button>
+        <button class="tbtn" id="tb-snap-180" title="Linear sp — 180°">180°</button>
+        <button class="tbtn" id="tb-snap-60" title="Classic 60° zigzag">60°</button>
+        <div class="tsep"></div>
+        <button class="tbtn" id="tb-erase">Erase</button>
+        <button class="tbtn" id="tb-move">Move</button>
+        <button class="tbtn" id="tb-undo">Undo</button>
+      </div>
+
+      <!-- CANVAS -->
+      <div class="canvas-wrap">
+        <canvas id="mc" height="380"></canvas>
+        <div class="canvas-hint-overlay">drag to draw a bond · snap to 60°</div>
+      </div>
+
+      <!-- DRAW GUIDE -->
+      <div class="draw-guide">
+        <div class="dg-item"><span class="dg-key">Drag</span><span>draw bond</span></div>
+        <div class="dg-item"><span class="dg-key">Auto snap</span><span>sp3=109° · sp2=120° · sp=180°</span></div>
+        <div class="dg-item"><span class="dg-key">C implicit</span><span>at every vertex/endpoint</span></div>
+        <div class="dg-item"><span class="dg-key">Heteroatom</span><span>select atom then drag endpoint</span></div>
+        <div class="dg-item"><span class="dg-key">Ring</span><span>drag end onto existing vertex</span></div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="actions">
+        <button class="abtn primary" onclick="checkStructure()">✓ Check Structure</button>
+        <button class="abtn" onclick="clearCanvas()">Clear</button>
+        <button class="abtn" onclick="giveHint()">Hint</button>
+        <button class="abtn" onclick="showAnswers()">Show Answers</button>
+      </div>
+
+      <!-- FEEDBACK -->
+      <div class="feedback" id="feedback">
+        Draw a bond-line skeletal structure — carbons are implicit at every vertex and endpoint.
+      </div>
+
+      <!-- LIVE COUNTS -->
+      <div class="live-counts" id="live-counts">
+        <div class="lc"><div class="lc-lbl">C</div><div class="lc-val" id="lc-C">0</div></div>
+        <div class="lc"><div class="lc-lbl">H (impl.)</div><div class="lc-val" id="lc-H">0</div></div>
+        <div class="lc"><div class="lc-lbl">O</div><div class="lc-val" id="lc-O">0</div></div>
+        <div class="lc"><div class="lc-lbl">N</div><div class="lc-val" id="lc-N">0</div></div>
+        <div class="lc"><div class="lc-lbl">Hal</div><div class="lc-val" id="lc-X">0</div></div>
+        <div class="lc"><div class="lc-lbl">Valence</div><div class="lc-val" id="lc-V">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+//  FORMULA DATABASE  (48 formulas, 240+ named structures)
+// ══════════════════════════════════════════════════════════════════════════════
+const DB=[
+ {f:"C4H10", lbl:"C₄H₁₀", name:"butane family",        tag:"ALKANE",    tot:2,
+  hint:"Straight chain vs one branch",
+  ans:[
+   {n:"n-butane",         verts:[{x:120,y:190,t:"C"},{x:220,y:130,t:"C"},{x:320,y:190,t:"C"},{x:420,y:130,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1]]},
+   {n:"isobutane",        verts:[{x:220,y:130,t:"C"},{x:320,y:190,t:"C"},{x:320,y:190,t:"C"},{x:420,y:130,t:"C"},{x:320,y:300,t:"C"}], edges:[[0,1,1],[1,3,1],[1,4,1]]}
+  ]},
+ {f:"C5H12", lbl:"C₅H₁₂", name:"pentane family",       tag:"ALKANE",    tot:3,
+  hint:"n-pentane, isopentane, neopentane",
+  ans:[
+   {n:"n-pentane",        verts:[{x:80,y:190,t:"C"},{x:180,y:130,t:"C"},{x:280,y:190,t:"C"},{x:380,y:130,t:"C"},{x:480,y:190,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"isopentane",       verts:[{x:80,y:190,t:"C"},{x:180,y:130,t:"C"},{x:280,y:190,t:"C"},{x:380,y:130,t:"C"},{x:280,y:300,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[2,4,1]]},
+   {n:"neopentane",       verts:[{x:300,y:190,t:"C"},{x:200,y:130,t:"C"},{x:400,y:130,t:"C"},{x:200,y:280,t:"C"},{x:400,y:280,t:"C"}], edges:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]}
+  ]},
+ {f:"C6H14", lbl:"C₆H₁₄", name:"hexane family",        tag:"ALKANE",    tot:5,
+  hint:"5 isomers — shorten the chain and add branches",
+  ans:[
+   {n:"n-hexane",         verts:[{x:60,y:190,t:"C"},{x:160,y:130,t:"C"},{x:260,y:190,t:"C"},{x:360,y:130,t:"C"},{x:460,y:190,t:"C"},{x:560,y:130,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1]]},
+   {n:"2-methylpentane",  verts:[{x:80,y:190,t:"C"},{x:180,y:130,t:"C"},{x:280,y:190,t:"C"},{x:380,y:130,t:"C"},{x:480,y:190,t:"C"},{x:180,y:40,t:"C"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[1,5,1]]},
+   {n:"3-methylpentane",  verts:[{x:80,y:190,t:"C"},{x:180,y:130,t:"C"},{x:280,y:190,t:"C"},{x:380,y:130,t:"C"},{x:480,y:190,t:"C"},{x:280,y:300,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[2,5,1]]},
+   {n:"2,2-dimethylbutane",verts:[{x:140,y:190,t:"C"},{x:280,y:190,t:"C"},{x:420,y:190,t:"C"},{x:540,y:130,t:"C"},{x:280,y:100,t:"C"},{x:280,y:300,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,1],[1,5,1]]},
+   {n:"2,3-dimethylbutane",verts:[{x:80,y:190,t:"C"},{x:200,y:130,t:"C"},{x:320,y:190,t:"C"},{x:440,y:130,t:"C"},{x:200,y:40,t:"C"},{x:320,y:300,t:"C"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,1],[2,5,1]]}
+  ]},
+ {f:"C3H6",  lbl:"C₃H₆",  name:"propene family",       tag:"ALKENE",    tot:2,
+  hint:"One alkene, one cycloalkane",
+  ans:[
+   {n:"propene",          verts:[{x:140,y:190,t:"C"},{x:260,y:130,t:"C"},{x:380,y:190,t:"C"}], edges:[[0,1,2],[1,2,1]]},
+   {n:"cyclopropane",     verts:[{x:300,y:110,t:"C"},{x:210,y:250,t:"C"},{x:390,y:250,t:"C"}], edges:[[0,1,1],[1,2,1],[2,0,1]]}
+  ]},
+ {f:"C4H8",  lbl:"C₄H₈",  name:"butene family",        tag:"ALKENE",    tot:5,
+  hint:"3 alkenes + cyclobutane + methylcyclopropane",
+  ans:[
+   {n:"but-1-ene",        verts:[{x:80,y:190,t:"C"},{x:200,y:130,t:"C"},{x:320,y:190,t:"C"},{x:440,y:130,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,1]]},
+   {n:"but-2-ene",        verts:[{x:80,y:130,t:"C"},{x:200,y:190,t:"C"},{x:320,y:130,t:"C"},{x:440,y:190,t:"C"}], edges:[[0,1,1],[1,2,2],[2,3,1]]},
+   {n:"2-methylpropene",  verts:[{x:160,y:220,t:"C"},{x:300,y:220,t:"C"},{x:440,y:220,t:"C"},{x:300,y:120,t:"C"}], edges:[[0,1,2],[1,2,1],[1,3,1]]},
+   {n:"cyclobutane",      verts:[{x:210,y:120,t:"C"},{x:370,y:120,t:"C"},{x:370,y:270,t:"C"},{x:210,y:270,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,0,1]]},
+   {n:"methylcyclopropane",verts:[{x:270,y:230,t:"C"},{x:370,y:160,t:"C"},{x:470,y:230,t:"C"},{x:150,y:230,t:"C"}], edges:[[0,1,1],[1,2,1],[2,0,1],[0,3,1]]}
+  ]},
+ {f:"C5H10", lbl:"C₅H₁₀", name:"pentene family",       tag:"ALKENE",    tot:7,
+  hint:"Pent-1-ene, pent-2-ene, 2/3-methyl isomers, cyclopentane, methylcyclobutane, dimethylcyclopropane",
+  ans:[
+   {n:"pent-1-ene",       verts:[{x:60,y:190,t:"C"},{x:160,y:130,t:"C"},{x:260,y:190,t:"C"},{x:360,y:130,t:"C"},{x:460,y:190,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"pent-2-ene",       verts:[{x:60,y:130,t:"C"},{x:160,y:190,t:"C"},{x:260,y:130,t:"C"},{x:360,y:190,t:"C"},{x:460,y:130,t:"C"}], edges:[[0,1,1],[1,2,2],[2,3,1],[3,4,1]]},
+   {n:"2-methylbut-1-ene",verts:[{x:100,y:220,t:"C"},{x:230,y:220,t:"C"},{x:360,y:220,t:"C"},{x:480,y:160,t:"C"},{x:230,y:120,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,1],[1,4,1]]},
+   {n:"3-methylbut-1-ene",verts:[{x:80,y:190,t:"C"},{x:200,y:130,t:"C"},{x:320,y:190,t:"C"},{x:440,y:130,t:"C"},{x:320,y:300,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,1],[2,4,1]]},
+   {n:"2-methylbut-2-ene",verts:[{x:80,y:130,t:"C"},{x:210,y:190,t:"C"},{x:340,y:130,t:"C"},{x:460,y:190,t:"C"},{x:210,y:310,t:"C"}], edges:[[0,1,1],[1,2,2],[2,3,1],[1,4,1]]},
+   {n:"cyclopentane",     verts:[{x:300,y:100,t:"C"},{x:420,y:180,t:"C"},{x:380,y:300,t:"C"},{x:220,y:300,t:"C"},{x:180,y:180,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,0,1]]},
+   {n:"methylcyclobutane",verts:[{x:240,y:120,t:"C"},{x:380,y:120,t:"C"},{x:420,y:250,t:"C"},{x:200,y:250,t:"C"},{x:120,y:120,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,0,1],[0,4,1]]}
+  ]},
+ {f:"C4H6",  lbl:"C₄H₆",  name:"butyne/diene family",  tag:"ALKYNE",    tot:5,
+  hint:"2 alkynes + 2 dienes + cyclobutene",
+  ans:[
+   {n:"but-1-yne",        verts:[{x:80,y:190,t:"C"},{x:200,y:130,t:"C"},{x:320,y:190,t:"C"},{x:440,y:130,t:"C"}], edges:[[0,1,1],[1,2,2],[1,2,1],[2,3,1]]},
+   {n:"but-2-yne",        verts:[{x:80,y:130,t:"C"},{x:200,y:190,t:"C"},{x:320,y:130,t:"C"},{x:440,y:190,t:"C"}], edges:[[0,1,1],[1,2,2],[1,2,1],[2,3,1]]},
+   {n:"buta-1,3-diene",   verts:[{x:80,y:190,t:"C"},{x:200,y:130,t:"C"},{x:320,y:190,t:"C"},{x:440,y:130,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,2]]},
+   {n:"buta-1,2-diene",   verts:[{x:80,y:130,t:"C"},{x:200,y:190,t:"C"},{x:320,y:130,t:"C"},{x:440,y:190,t:"C"}], edges:[[0,1,2],[1,2,2],[2,3,1]]},
+   {n:"cyclobutene",      verts:[{x:210,y:120,t:"C"},{x:370,y:120,t:"C"},{x:370,y:270,t:"C"},{x:210,y:270,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,1],[3,0,1]]}
+  ]},
+ {f:"C2H6O", lbl:"C₂H₆O", name:"ethanol family",       tag:"ALCOHOL",   tot:2,
+  hint:"Alcohol vs ether — where is the O?",
+  ans:[
+   {n:"ethanol",          verts:[{x:160,y:190,t:"C"},{x:300,y:130,t:"C"},{x:440,y:190,t:"O"}], edges:[[0,1,1],[1,2,1]]},
+   {n:"dimethyl ether",   verts:[{x:140,y:190,t:"C"},{x:300,y:190,t:"O"},{x:460,y:190,t:"C"}], edges:[[0,1,1],[1,2,1]]}
+  ]},
+ {f:"C3H8O", lbl:"C₃H₈O", name:"propanol family",      tag:"ALCOHOL",   tot:3,
+  hint:"1-propanol, 2-propanol, methyl ethyl ether",
+  ans:[
+   {n:"propan-1-ol",      verts:[{x:80,y:190,t:"C"},{x:210,y:130,t:"C"},{x:340,y:190,t:"C"},{x:480,y:130,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1]]},
+   {n:"propan-2-ol",      verts:[{x:80,y:130,t:"C"},{x:220,y:190,t:"C"},{x:360,y:130,t:"C"},{x:220,y:310,t:"O"}], edges:[[0,1,1],[1,2,1],[1,3,1]]},
+   {n:"methoxyethane",    verts:[{x:80,y:190,t:"C"},{x:220,y:130,t:"O"},{x:360,y:190,t:"C"},{x:500,y:130,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1]]}
+  ]},
+ {f:"C4H10O",lbl:"C₄H₁₀O",name:"butanol family",       tag:"ALCOHOL",   tot:7,
+  hint:"4 alcohols + 3 ethers",
+  ans:[
+   {n:"butan-1-ol",       verts:[{x:60,y:190,t:"C"},{x:170,y:130,t:"C"},{x:280,y:190,t:"C"},{x:390,y:130,t:"C"},{x:510,y:190,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"butan-2-ol",       verts:[{x:60,y:130,t:"C"},{x:180,y:190,t:"C"},{x:300,y:130,t:"C"},{x:420,y:190,t:"C"},{x:180,y:310,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,1]]},
+   {n:"2-methylpropan-1-ol",verts:[{x:80,y:190,t:"C"},{x:210,y:130,t:"C"},{x:340,y:190,t:"C"},{x:210,y:40,t:"C"},{x:470,y:130,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,4,1],[1,3,1]]},
+   {n:"2-methylpropan-2-ol",verts:[{x:300,y:190,t:"C"},{x:180,y:130,t:"C"},{x:420,y:130,t:"C"},{x:300,y:80,t:"C"},{x:300,y:310,t:"O"}],  edges:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]},
+   {n:"diethyl ether",    verts:[{x:60,y:190,t:"C"},{x:190,y:130,t:"C"},{x:320,y:190,t:"O"},{x:450,y:130,t:"C"},{x:580,y:190,t:"C"}],    edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"methyl propyl ether",verts:[{x:60,y:190,t:"C"},{x:200,y:190,t:"O"},{x:340,y:130,t:"C"},{x:460,y:190,t:"C"},{x:570,y:130,t:"C"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"methyl isopropyl ether",verts:[{x:80,y:190,t:"C"},{x:220,y:190,t:"O"},{x:360,y:130,t:"C"},{x:480,y:190,t:"C"},{x:360,y:40,t:"C"}],edges:[[0,1,1],[1,2,1],[2,3,1],[2,4,1]]}
+  ]},
+ {f:"C3H6O", lbl:"C₃H₆O", name:"propanal family",      tag:"CARBONYL",  tot:4,
+  hint:"Aldehyde, ketone, vinyl alcohol, methyloxirane",
+  ans:[
+   {n:"propanal",         verts:[{x:100,y:190,t:"C"},{x:240,y:130,t:"C"},{x:380,y:190,t:"C"},{x:500,y:130,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,2]]},
+   {n:"propanone",        verts:[{x:100,y:130,t:"C"},{x:240,y:190,t:"C"},{x:380,y:130,t:"C"},{x:240,y:310,t:"O"}], edges:[[0,1,1],[1,2,1],[1,3,2]]},
+   {n:"propen-1-ol",      verts:[{x:80,y:190,t:"C"},{x:220,y:130,t:"C"},{x:360,y:190,t:"C"},{x:500,y:130,t:"O"}], edges:[[0,1,2],[1,2,1],[2,3,1]]},
+   {n:"methyloxirane",    verts:[{x:240,y:220,t:"C"},{x:360,y:150,t:"O"},{x:480,y:220,t:"C"},{x:120,y:220,t:"C"}], edges:[[0,1,1],[1,2,1],[2,0,1],[0,3,1]]}
+  ]},
+ {f:"C4H8O", lbl:"C₄H₈O", name:"butanal family",       tag:"CARBONYL",  tot:6,
+  hint:"2 aldehydes, 1 ketone, THF, oxetane, unsaturated alcohol",
+  ans:[
+   {n:"butanal",          verts:[{x:60,y:190,t:"C"},{x:180,y:130,t:"C"},{x:300,y:190,t:"C"},{x:420,y:130,t:"C"},{x:540,y:190,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,2]]},
+   {n:"2-methylpropanal", verts:[{x:140,y:190,t:"C"},{x:280,y:130,t:"C"},{x:420,y:190,t:"C"},{x:280,y:40,t:"C"},{x:540,y:130,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,4,2],[1,3,1]]},
+   {n:"butanone",         verts:[{x:80,y:190,t:"C"},{x:210,y:130,t:"C"},{x:340,y:190,t:"C"},{x:470,y:130,t:"C"},{x:210,y:40,t:"O"}],   edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,2]]},
+   {n:"tetrahydrofuran",  verts:[{x:200,y:110,t:"C"},{x:380,y:110,t:"C"},{x:440,y:260,t:"C"},{x:300,y:340,t:"O"},{x:160,y:260,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,0,1]]},
+   {n:"2-methyloxetane",  verts:[{x:210,y:130,t:"C"},{x:370,y:130,t:"C"},{x:410,y:260,t:"C"},{x:210,y:260,t:"O"},{x:100,y:80,t:"C"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,0,1],[0,4,1]]},
+   {n:"but-3-en-1-ol",    verts:[{x:80,y:190,t:"O"},{x:220,y:130,t:"C"},{x:360,y:190,t:"C"},{x:500,y:130,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,2]]}
+  ]},
+ {f:"C2H4O", lbl:"C₂H₄O", name:"acetaldehyde family",  tag:"CARBONYL",  tot:3,
+  hint:"Aldehyde, epoxide, vinyl alcohol",
+  ans:[
+   {n:"ethanal",          verts:[{x:180,y:190,t:"C"},{x:340,y:130,t:"C"},{x:480,y:190,t:"O"}], edges:[[0,1,1],[1,2,2]]},
+   {n:"oxirane",          verts:[{x:220,y:160,t:"C"},{x:400,y:160,t:"C"},{x:310,y:290,t:"O"}], edges:[[0,1,1],[1,2,1],[2,0,1]]},
+   {n:"ethenol",          verts:[{x:160,y:190,t:"C"},{x:320,y:130,t:"C"},{x:460,y:190,t:"O"}], edges:[[0,1,2],[1,2,1]]}
+  ]},
+ {f:"C2H4O2",lbl:"C₂H₄O₂",name:"acetic acid family",   tag:"ACID/ESTER",tot:2,
+  hint:"Carboxylic acid vs methyl formate",
+  ans:[
+   {n:"acetic acid",      verts:[{x:160,y:190,t:"C"},{x:320,y:130,t:"C"},{x:460,y:190,t:"O"},{x:320,y:40,t:"O"}], edges:[[0,1,1],[1,2,1],[1,3,2]]},
+   {n:"methyl formate",   verts:[{x:100,y:190,t:"C"},{x:260,y:190,t:"O"},{x:420,y:130,t:"C"},{x:540,y:190,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,2]]}
+  ]},
+ {f:"C3H6O2",lbl:"C₃H₆O₂",name:"propanoic acid family",tag:"ACID/ESTER",tot:3,
+  hint:"Propanoic acid, methyl acetate, ethyl formate",
+  ans:[
+   {n:"propanoic acid",   verts:[{x:60,y:190,t:"C"},{x:190,y:130,t:"C"},{x:320,y:190,t:"C"},{x:450,y:130,t:"O"},{x:320,y:310,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[2,4,2]]},
+   {n:"methyl acetate",   verts:[{x:60,y:190,t:"C"},{x:200,y:190,t:"O"},{x:340,y:130,t:"C"},{x:460,y:190,t:"C"},{x:340,y:40,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[2,4,2]]},
+   {n:"ethyl formate",    verts:[{x:60,y:190,t:"C"},{x:190,y:130,t:"C"},{x:320,y:190,t:"O"},{x:460,y:130,t:"C"},{x:580,y:190,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,2]]}
+  ]},
+ {f:"C2H7N", lbl:"C₂H₇N", name:"ethylamine family",    tag:"AMINE",     tot:2,
+  hint:"Ethylamine vs dimethylamine",
+  ans:[
+   {n:"ethylamine",       verts:[{x:180,y:190,t:"C"},{x:330,y:130,t:"C"},{x:480,y:190,t:"N"}], edges:[[0,1,1],[1,2,1]]},
+   {n:"dimethylamine",    verts:[{x:160,y:190,t:"C"},{x:310,y:190,t:"N"},{x:460,y:190,t:"C"}], edges:[[0,1,1],[1,2,1]]}
+  ]},
+ {f:"C3H9N", lbl:"C₃H₉N", name:"propylamine family",   tag:"AMINE",     tot:4,
+  hint:"n-propyl, isopropyl, ethylmethyl, trimethyl",
+  ans:[
+   {n:"propan-1-amine",   verts:[{x:80,y:190,t:"C"},{x:210,y:130,t:"C"},{x:340,y:190,t:"C"},{x:480,y:130,t:"N"}], edges:[[0,1,1],[1,2,1],[2,3,1]]},
+   {n:"propan-2-amine",   verts:[{x:80,y:130,t:"C"},{x:220,y:190,t:"C"},{x:360,y:130,t:"C"},{x:220,y:320,t:"N"}], edges:[[0,1,1],[1,2,1],[1,3,1]]},
+   {n:"N-methylethanamine",verts:[{x:80,y:190,t:"C"},{x:210,y:130,t:"N"},{x:340,y:190,t:"C"},{x:480,y:130,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1]]},
+   {n:"trimethylamine",   verts:[{x:300,y:190,t:"N"},{x:160,y:250,t:"C"},{x:440,y:250,t:"C"},{x:300,y:70,t:"C"}], edges:[[0,1,1],[0,2,1],[0,3,1]]}
+  ]},
+ {f:"C3H7Cl",lbl:"C₃H₇Cl",name:"chloropropane family", tag:"HALOALKANE",tot:2,
+  hint:"1-chloro vs 2-chloro",
+  ans:[
+   {n:"1-chloropropane",  verts:[{x:80,y:190,t:"Cl"},{x:220,y:130,t:"C"},{x:360,y:190,t:"C"},{x:500,y:130,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1]]},
+   {n:"2-chloropropane",  verts:[{x:80,y:130,t:"C"},{x:220,y:190,t:"C"},{x:360,y:130,t:"C"},{x:220,y:320,t:"Cl"}], edges:[[0,1,1],[1,2,1],[1,3,1]]}
+  ]},
+ {f:"C4H9Cl",lbl:"C₄H₉Cl",name:"chlorobutane family",  tag:"HALOALKANE",tot:4,
+  hint:"4 positional/structural isomers",
+  ans:[
+   {n:"1-chlorobutane",   verts:[{x:60,y:190,t:"Cl"},{x:180,y:130,t:"C"},{x:300,y:190,t:"C"},{x:420,y:130,t:"C"},{x:540,y:190,t:"C"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"2-chlorobutane",   verts:[{x:60,y:130,t:"C"},{x:180,y:190,t:"C"},{x:300,y:130,t:"C"},{x:420,y:190,t:"C"},{x:180,y:310,t:"Cl"}],   edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,1]]},
+   {n:"1-chloro-2-methylpropane",verts:[{x:80,y:220,t:"Cl"},{x:210,y:160,t:"C"},{x:340,y:220,t:"C"},{x:210,y:60,t:"C"},{x:470,y:160,t:"C"}],edges:[[0,1,1],[1,2,1],[1,3,1],[2,4,1]]},
+   {n:"2-chloro-2-methylpropane",verts:[{x:300,y:190,t:"C"},{x:180,y:130,t:"C"},{x:420,y:130,t:"C"},{x:300,y:80,t:"C"},{x:300,y:310,t:"Cl"}],edges:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]}
+  ]},
+ {f:"C2H4Cl2",lbl:"C₂H₄Cl₂",name:"dichloroethane family",tag:"HALOALKANE",tot:2,
+  hint:"1,1- vs 1,2-dichloroethane",
+  ans:[
+   {n:"1,1-dichloroethane",verts:[{x:180,y:190,t:"C"},{x:360,y:190,t:"C"},{x:180,y:80,t:"Cl"},{x:80,y:260,t:"Cl"}],  edges:[[0,1,1],[0,2,1],[0,3,1]]},
+   {n:"1,2-dichloroethane",verts:[{x:140,y:190,t:"Cl"},{x:290,y:130,t:"C"},{x:440,y:190,t:"C"},{x:590,y:130,t:"Cl"}], edges:[[0,1,1],[1,2,1],[2,3,1]]}
+  ]},
+ {f:"C2H5NO",lbl:"C₂H₅NO",name:"acetamide family",     tag:"MIXED",     tot:2,
+  hint:"Amide vs aminoethanol",
+  ans:[
+   {n:"acetamide",        verts:[{x:120,y:190,t:"C"},{x:280,y:130,t:"C"},{x:420,y:190,t:"N"},{x:280,y:40,t:"O"}], edges:[[0,1,1],[1,2,1],[1,3,2]]},
+   {n:"2-aminoethanol",   verts:[{x:100,y:190,t:"N"},{x:260,y:130,t:"C"},{x:420,y:190,t:"C"},{x:580,y:130,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1]]}
+  ]},
+ {f:"C5H12O",lbl:"C₅H₁₂O",name:"pentanol family",      tag:"ALCOHOL",   tot:8,
+  hint:"4 alcohols + 4 ethers",
+  ans:[
+   {n:"pentan-1-ol",      verts:[{x:40,y:190,t:"C"},{x:150,y:130,t:"C"},{x:260,y:190,t:"C"},{x:370,y:130,t:"C"},{x:480,y:190,t:"C"},{x:600,y:130,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1]]},
+   {n:"pentan-2-ol",      verts:[{x:60,y:130,t:"C"},{x:175,y:190,t:"C"},{x:290,y:130,t:"C"},{x:405,y:190,t:"C"},{x:520,y:130,t:"C"},{x:175,y:310,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[1,5,1]]},
+   {n:"pentan-3-ol",      verts:[{x:60,y:130,t:"C"},{x:180,y:190,t:"C"},{x:300,y:130,t:"C"},{x:420,y:190,t:"C"},{x:540,y:130,t:"C"},{x:300,y:40,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[2,5,1]]},
+   {n:"2-methyl-1-butanol",verts:[{x:80,y:220,t:"C"},{x:210,y:160,t:"C"},{x:340,y:220,t:"C"},{x:210,y:60,t:"C"},{x:470,y:160,t:"C"},{x:600,y:220,t:"O"}],edges:[[0,1,1],[1,2,1],[1,3,1],[2,4,1],[4,5,1]]},
+   {n:"diethyl methanol", verts:[{x:300,y:200,t:"C"},{x:160,y:140,t:"C"},{x:440,y:140,t:"C"},{x:300,y:320,t:"O"},{x:60,y:200,t:"C"},{x:560,y:200,t:"C"}],  edges:[[0,1,1],[0,2,1],[0,3,1],[1,4,1],[2,5,1]]},
+   {n:"methyl butyl ether",verts:[{x:60,y:190,t:"C"},{x:200,y:190,t:"O"},{x:340,y:130,t:"C"},{x:460,y:190,t:"C"},{x:580,y:130,t:"C"},{x:700,y:190,t:"C"}],edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1]]},
+   {n:"ethyl propyl ether",verts:[{x:60,y:190,t:"C"},{x:190,y:130,t:"C"},{x:320,y:190,t:"O"},{x:450,y:130,t:"C"},{x:580,y:190,t:"C"},{x:700,y:130,t:"C"}],edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1]]},
+   {n:"methyl isobutyl ether",verts:[{x:60,y:190,t:"C"},{x:200,y:190,t:"O"},{x:340,y:130,t:"C"},{x:460,y:190,t:"C"},{x:340,y:40,t:"C"},{x:590,y:130,t:"C"}],edges:[[0,1,1],[1,2,1],[2,3,1],[2,4,1],[3,5,1]]}
+  ]},
+ {f:"C4H11N",lbl:"C₄H₁₁N",name:"butylamine family",    tag:"AMINE",     tot:8,
+  hint:"4 primary + 3 secondary + 1 tertiary",
+  ans:[
+   {n:"butan-1-amine",    verts:[{x:60,y:190,t:"C"},{x:180,y:130,t:"C"},{x:300,y:190,t:"C"},{x:420,y:130,t:"C"},{x:540,y:190,t:"N"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"butan-2-amine",    verts:[{x:60,y:130,t:"C"},{x:180,y:190,t:"C"},{x:300,y:130,t:"C"},{x:420,y:190,t:"C"},{x:180,y:310,t:"N"}], edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,1]]},
+   {n:"2-methylpropan-1-amine",verts:[{x:80,y:220,t:"C"},{x:210,y:160,t:"C"},{x:340,y:220,t:"C"},{x:210,y:60,t:"C"},{x:470,y:160,t:"N"}],edges:[[0,1,1],[1,2,1],[1,3,1],[2,4,1]]},
+   {n:"2-methylpropan-2-amine",verts:[{x:300,y:190,t:"C"},{x:180,y:130,t:"C"},{x:420,y:130,t:"C"},{x:300,y:80,t:"C"},{x:300,y:310,t:"N"}],edges:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]},
+   {n:"diethylamine",     verts:[{x:60,y:190,t:"C"},{x:190,y:130,t:"C"},{x:320,y:190,t:"N"},{x:450,y:130,t:"C"},{x:580,y:190,t:"C"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"N-methylpropylamine",verts:[{x:60,y:190,t:"C"},{x:200,y:130,t:"N"},{x:340,y:190,t:"C"},{x:470,y:130,t:"C"},{x:200,y:40,t:"C"}],edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,1]]},
+   {n:"N-methyl-2-propanamine",verts:[{x:60,y:130,t:"C"},{x:190,y:190,t:"C"},{x:320,y:130,t:"N"},{x:450,y:190,t:"C"},{x:190,y:310,t:"C"},{x:320,y:40,t:"C"}],edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,1],[2,5,1]]},
+   {n:"N,N-dimethylethylamine",verts:[{x:300,y:200,t:"N"},{x:160,y:260,t:"C"},{x:440,y:260,t:"C"},{x:300,y:80,t:"C"},{x:560,y:200,t:"C"}],edges:[[0,1,1],[0,2,1],[0,3,1],[2,4,1]]}
+  ]},
+ {f:"C6H6",  lbl:"C₆H₆",  name:"benzene",              tag:"AROMATIC",  tot:1,
+  hint:"Benzene — alternating double bonds in a 6-membered ring",
+  ans:[{n:"benzene",verts:[{x:300,y:90,t:"C"},{x:420,y:155,t:"C"},{x:420,y:285,t:"C"},{x:300,y:350,t:"C"},{x:180,y:285,t:"C"},{x:180,y:155,t:"C"}],edges:[[0,1,2],[1,2,1],[2,3,2],[3,4,1],[4,5,2],[5,0,1]]}]},
+ {f:"C7H8",  lbl:"C₇H₈",  name:"toluene",              tag:"AROMATIC",  tot:1,
+  hint:"Benzene ring with one methyl group",
+  ans:[{n:"toluene",verts:[{x:300,y:90,t:"C"},{x:420,y:155,t:"C"},{x:420,y:285,t:"C"},{x:300,y:350,t:"C"},{x:180,y:285,t:"C"},{x:180,y:155,t:"C"},{x:300,y:0,t:"C"}],edges:[[0,1,2],[1,2,1],[2,3,2],[3,4,1],[4,5,2],[5,0,1],[0,6,1]]}]},
+ {f:"C8H10", lbl:"C₈H₁₀", name:"xylene family",        tag:"AROMATIC",  tot:3,
+  hint:"ortho / meta / para — position of two methyl groups",
+  ans:[
+   {n:"o-xylene",verts:[{x:300,y:90,t:"C"},{x:420,y:155,t:"C"},{x:420,y:285,t:"C"},{x:300,y:350,t:"C"},{x:180,y:285,t:"C"},{x:180,y:155,t:"C"},{x:300,y:0,t:"C"},{x:510,y:105,t:"C"}],edges:[[0,1,2],[1,2,1],[2,3,2],[3,4,1],[4,5,2],[5,0,1],[0,6,1],[1,7,1]]},
+   {n:"m-xylene",verts:[{x:300,y:90,t:"C"},{x:420,y:155,t:"C"},{x:420,y:285,t:"C"},{x:300,y:350,t:"C"},{x:180,y:285,t:"C"},{x:180,y:155,t:"C"},{x:300,y:0,t:"C"},{x:510,y:235,t:"C"}],edges:[[0,1,2],[1,2,1],[2,3,2],[3,4,1],[4,5,2],[5,0,1],[0,6,1],[2,7,1]]},
+   {n:"p-xylene",verts:[{x:300,y:90,t:"C"},{x:420,y:155,t:"C"},{x:420,y:285,t:"C"},{x:300,y:350,t:"C"},{x:180,y:285,t:"C"},{x:180,y:155,t:"C"},{x:300,y:0,t:"C"},{x:300,y:440,t:"C"}],edges:[[0,1,2],[1,2,1],[2,3,2],[3,4,1],[4,5,2],[5,0,1],[0,6,1],[3,7,1]]}
+  ]},
+ {f:"C5H8",  lbl:"C₅H₈",  name:"pentadiene/yne family",tag:"ALKYNE",    tot:6,
+  hint:"Alkynes, dienes, cyclopentene, methylenecyclobutane",
+  ans:[
+   {n:"pent-1-yne",       verts:[{x:60,y:190,t:"C"},{x:180,y:130,t:"C"},{x:300,y:190,t:"C"},{x:420,y:130,t:"C"},{x:540,y:190,t:"C"}], edges:[[0,1,1],[1,2,2],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"pent-2-yne",       verts:[{x:60,y:130,t:"C"},{x:180,y:190,t:"C"},{x:300,y:130,t:"C"},{x:420,y:190,t:"C"},{x:540,y:130,t:"C"}], edges:[[0,1,1],[1,2,2],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"penta-1,3-diene",  verts:[{x:60,y:190,t:"C"},{x:180,y:130,t:"C"},{x:300,y:190,t:"C"},{x:420,y:130,t:"C"},{x:540,y:190,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,2],[3,4,1]]},
+   {n:"penta-1,4-diene",  verts:[{x:60,y:130,t:"C"},{x:180,y:190,t:"C"},{x:300,y:130,t:"C"},{x:420,y:190,t:"C"},{x:540,y:130,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,1],[3,4,2]]},
+   {n:"cyclopentene",     verts:[{x:300,y:90,t:"C"},{x:430,y:170,t:"C"},{x:390,y:310,t:"C"},{x:210,y:310,t:"C"},{x:170,y:170,t:"C"}], edges:[[0,1,2],[1,2,1],[2,3,1],[3,4,1],[4,0,1]]},
+   {n:"methylenecyclobutane",verts:[{x:240,y:160,t:"C"},{x:400,y:160,t:"C"},{x:440,y:290,t:"C"},{x:200,y:290,t:"C"},{x:320,y:60,t:"C"}],edges:[[0,1,1],[1,2,1],[2,3,1],[3,0,1],[0,4,2]]}
+  ]},
+ {f:"C3H4",  lbl:"C₃H₄",  name:"propyne/allene family",tag:"ALKYNE",    tot:2,
+  hint:"Triple bond vs cumulated double bonds",
+  ans:[
+   {n:"propyne",          verts:[{x:140,y:190,t:"C"},{x:290,y:130,t:"C"},{x:440,y:190,t:"C"}], edges:[[0,1,1],[1,2,2],[1,2,1]]},
+   {n:"allene",           verts:[{x:140,y:190,t:"C"},{x:300,y:130,t:"C"},{x:460,y:190,t:"C"}], edges:[[0,1,2],[1,2,2]]}
+  ]},
+ {f:"C4H4O", lbl:"C₄H₄O", name:"furan family",         tag:"AROMATIC",  tot:2,
+  hint:"Furan (aromatic O-ring) + linear isomer",
+  ans:[
+   {n:"furan",            verts:[{x:300,y:90,t:"O"},{x:420,y:175,t:"C"},{x:380,y:310,t:"C"},{x:220,y:310,t:"C"},{x:180,y:175,t:"C"}], edges:[[0,1,1],[1,2,2],[2,3,1],[3,4,2],[4,0,1]]},
+   {n:"but-2-yn-1-al",    verts:[{x:80,y:190,t:"C"},{x:220,y:130,t:"C"},{x:360,y:190,t:"C"},{x:500,y:130,t:"C"},{x:620,y:190,t:"O"}], edges:[[0,1,1],[1,2,2],[1,2,1],[2,3,1],[3,4,2]]}
+  ]},
+ {f:"C4H5N", lbl:"C₄H₅N", name:"pyrrole",              tag:"AROMATIC",  tot:1,
+  hint:"5-membered N-containing aromatic ring",
+  ans:[{n:"pyrrole",verts:[{x:300,y:90,t:"N"},{x:420,y:175,t:"C"},{x:380,y:310,t:"C"},{x:220,y:310,t:"C"},{x:180,y:175,t:"C"}],edges:[[0,1,1],[1,2,2],[2,3,1],[3,4,2],[4,0,1]]}]},
+ {f:"C5H5N", lbl:"C₅H₅N", name:"pyridine",             tag:"AROMATIC",  tot:1,
+  hint:"6-membered N-containing aromatic ring",
+  ans:[{n:"pyridine",verts:[{x:300,y:90,t:"N"},{x:420,y:160,t:"C"},{x:420,y:280,t:"C"},{x:300,y:350,t:"C"},{x:180,y:280,t:"C"},{x:180,y:160,t:"C"}],edges:[[0,1,2],[1,2,1],[2,3,2],[3,4,1],[4,5,2],[5,0,1]]}]},
+ {f:"C3H8O2",lbl:"C₃H₈O₂",name:"propanediol family",   tag:"DIOL",      tot:3,
+  hint:"1,2-diol, 1,3-diol, methoxy methanol",
+  ans:[
+   {n:"propane-1,2-diol", verts:[{x:80,y:190,t:"O"},{x:230,y:130,t:"C"},{x:380,y:190,t:"C"},{x:510,y:130,t:"C"},{x:380,y:310,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[2,4,1]]},
+   {n:"propane-1,3-diol", verts:[{x:60,y:190,t:"O"},{x:200,y:130,t:"C"},{x:340,y:190,t:"C"},{x:480,y:130,t:"C"},{x:620,y:190,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]},
+   {n:"2-methoxyethanol", verts:[{x:80,y:190,t:"C"},{x:220,y:130,t:"O"},{x:360,y:190,t:"C"},{x:500,y:130,t:"C"},{x:640,y:190,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]}
+  ]},
+ {f:"C3H5Cl",lbl:"C₃H₅Cl",name:"chloropropene family", tag:"HALOALKANE",tot:4,
+  hint:"Allyl chloride + 3 vinyl chloride isomers",
+  ans:[
+   {n:"3-chloropropene",  verts:[{x:80,y:190,t:"C"},{x:220,y:130,t:"C"},{x:360,y:190,t:"C"},{x:500,y:130,t:"Cl"}], edges:[[0,1,2],[1,2,1],[2,3,1]]},
+   {n:"1-chloropropene",  verts:[{x:80,y:190,t:"Cl"},{x:220,y:130,t:"C"},{x:360,y:190,t:"C"},{x:500,y:130,t:"C"}], edges:[[0,1,1],[1,2,2],[2,3,1]]},
+   {n:"2-chloropropene",  verts:[{x:80,y:130,t:"C"},{x:230,y:190,t:"C"},{x:370,y:130,t:"C"},{x:230,y:320,t:"Cl"}], edges:[[0,1,2],[1,2,1],[1,3,1]]},
+   {n:"chlorocyclopropane",verts:[{x:260,y:160,t:"C"},{x:380,y:240,t:"C"},{x:140,y:240,t:"C"},{x:260,y:60,t:"Cl"}],edges:[[0,1,1],[1,2,1],[2,0,1],[0,3,1]]}
+  ]},
+ {f:"C2H3Cl3",lbl:"C₂H₃Cl₃",name:"trichloroethane family",tag:"HALOALKANE",tot:2,
+  hint:"1,1,1- vs 1,1,2-trichloroethane",
+  ans:[
+   {n:"1,1,1-trichloroethane",verts:[{x:180,y:200,t:"C"},{x:360,y:200,t:"C"},{x:120,y:100,t:"Cl"},{x:80,y:280,t:"Cl"},{x:270,y:330,t:"Cl"}],edges:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]},
+   {n:"1,1,2-trichloroethane",verts:[{x:140,y:190,t:"Cl"},{x:290,y:130,t:"C"},{x:440,y:190,t:"C"},{x:290,y:40,t:"Cl"},{x:550,y:100,t:"Cl"}],edges:[[0,1,1],[1,2,1],[1,3,1],[2,4,1]]}
+  ]},
+ {f:"C2H2Cl2",lbl:"C₂H₂Cl₂",name:"dichloroethylene family",tag:"HALOALKANE",tot:2,
+  hint:"1,1- vs 1,2-dichloroethylene",
+  ans:[
+   {n:"1,1-dichloroethylene",verts:[{x:180,y:200,t:"C"},{x:380,y:200,t:"C"},{x:120,y:100,t:"Cl"},{x:120,y:310,t:"Cl"}],edges:[[0,1,2],[0,2,1],[0,3,1]]},
+   {n:"1,2-dichloroethylene",verts:[{x:100,y:190,t:"Cl"},{x:250,y:130,t:"C"},{x:420,y:190,t:"C"},{x:570,y:130,t:"Cl"}],edges:[[0,1,1],[1,2,2],[2,3,1]]}
+  ]},
+ {f:"C4H8O2",lbl:"C₄H₈O₂",name:"butyric acid family",  tag:"ACID/ESTER",tot:5,
+  hint:"2 acids + 3 esters",
+  ans:[
+   {n:"butanoic acid",    verts:[{x:60,y:190,t:"C"},{x:180,y:130,t:"C"},{x:300,y:190,t:"C"},{x:420,y:130,t:"C"},{x:540,y:190,t:"O"},{x:420,y:40,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[3,5,2]]},
+   {n:"2-methylpropanoic acid",verts:[{x:120,y:220,t:"C"},{x:260,y:160,t:"C"},{x:400,y:220,t:"C"},{x:260,y:60,t:"C"},{x:520,y:160,t:"O"},{x:400,y:320,t:"O"}],edges:[[0,1,1],[1,2,1],[1,3,1],[2,4,1],[2,5,2]]},
+   {n:"propyl formate",   verts:[{x:60,y:190,t:"C"},{x:190,y:130,t:"C"},{x:320,y:190,t:"O"},{x:460,y:130,t:"C"},{x:590,y:190,t:"C"},{x:590,y:80,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[3,5,2]]},
+   {n:"ethyl acetate",    verts:[{x:60,y:190,t:"C"},{x:190,y:130,t:"C"},{x:320,y:190,t:"O"},{x:460,y:130,t:"C"},{x:580,y:190,t:"C"},{x:460,y:40,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[3,5,2]]},
+   {n:"methyl propanoate",verts:[{x:60,y:190,t:"C"},{x:190,y:190,t:"O"},{x:340,y:130,t:"C"},{x:460,y:190,t:"C"},{x:580,y:130,t:"C"},{x:340,y:40,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[2,5,2]]}
+  ]},
+ {f:"C3H7NO",lbl:"C₃H₇NO",name:"propanamide family",   tag:"MIXED",     tot:4,
+  hint:"Propanamide, N-methylacetamide, amino alcohols",
+  ans:[
+   {n:"propanamide",      verts:[{x:80,y:190,t:"C"},{x:210,y:130,t:"C"},{x:340,y:190,t:"C"},{x:480,y:130,t:"N"},{x:340,y:310,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[2,4,2]]},
+   {n:"N-methylacetamide",verts:[{x:80,y:190,t:"C"},{x:220,y:130,t:"C"},{x:360,y:190,t:"N"},{x:490,y:130,t:"C"},{x:220,y:40,t:"O"}],  edges:[[0,1,1],[1,2,1],[2,3,1],[1,4,2]]},
+   {n:"1-amino-2-propanol",verts:[{x:80,y:190,t:"N"},{x:220,y:130,t:"C"},{x:360,y:190,t:"C"},{x:500,y:130,t:"C"},{x:360,y:310,t:"O"}],edges:[[0,1,1],[1,2,1],[2,3,1],[2,4,1]]},
+   {n:"3-amino-1-propanol",verts:[{x:80,y:190,t:"N"},{x:220,y:130,t:"C"},{x:360,y:190,t:"C"},{x:500,y:130,t:"C"},{x:500,y:40,t:"O"}], edges:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]}
+  ]}
+];
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  DRAWING ENGINE — Bond-line / skeletal notation
+//  Vertices: implicit C at every endpoint/junction. Heteroatoms show label.
+//  Bonds: lines between vertices. 1=single 2=double 3=triple
+// ══════════════════════════════════════════════════════════════════════════════
+const VALENCE={C:4,H:1,O:2,N:3,Cl:1,Br:1,F:1,I:1,S:2,P:3};
+const BOND_LEN=70;
+const VERTEX_R=8;
+const HETERO_COLORS={O:"#ff6b50",N:"#5ba3ff",H:"#aaa9a0",Cl:"#4dd",Br:"#d96040",S:"#f0c040",F:"#80e0c0",I:"#c090f0",P:"#f09060"};
+
+// ── Snap mode: "auto" | "109" | "120" | "180" | "60"
+let snapMode="auto";
+
+// Returns candidate snap angles (radians) from a given start vertex.
+// "Auto" detects hybridisation from existing bonds at that vertex.
+function getSnapAngles(startVi){
+  if(snapMode==="60")  return everyN(60);
+  if(snapMode==="109") return everyN(109.47);
+  if(snapMode==="120") return everyN(120);
+  if(snapMode==="180") return everyN(180);
+
+  // AUTO — infer from existing bonds at startVi
+  if(startVi===-1) return everyN(60); // free start → standard zigzag
+
+  const myEdges=edges.filter(e=>e[0]===startVi||e[1]===startVi);
+  const hasTriple=myEdges.some(e=>e[2]===3);
+  const hasDouble=myEdges.some(e=>e[2]===2);
+  const degree=myEdges.length;
+
+  // sp: linear 180° — when triple bond present OR already 2 bonds with a double
+  if(hasTriple||(hasDouble&&degree>=2)) return spAngles(startVi);
+  // sp2: 120° — when double bond OR 3 existing bonds
+  if(hasDouble||degree>=2) return sp2Angles(startVi);
+  // sp3: ~109.5° — default for saturated carbon with 1-3 bonds
+  if(degree>=1) return sp3Angles(startVi);
+  // isolated vertex: zigzag
+  return everyN(60);
+}
+
+function everyN(deg){
+  const out=[];
+  for(let a=0;a<360;a+=deg) out.push(a*Math.PI/180);
+  return out;
+}
+
+// Existing bond directions from vertex vi
+function bondDirs(vi){
+  return edges.filter(e=>e[0]===vi||e[1]===vi).map(e=>{
+    const other=e[0]===vi?e[1]:e[0];
+    return Math.atan2(verts[other].y-verts[vi].y, verts[other].x-verts[vi].x);
+  });
+}
+
+// sp linear: 180° from each existing bond
+function spAngles(vi){
+  const dirs=bondDirs(vi);
+  if(!dirs.length) return everyN(180);
+  return dirs.map(d=>d+Math.PI);
+}
+
+// sp2 trigonal planar: 120° spacing around existing bonds
+function sp2Angles(vi){
+  const dirs=bondDirs(vi);
+  if(!dirs.length) return everyN(120);
+  // Place new bonds at ±120° from each existing bond
+  const cands=new Set();
+  dirs.forEach(d=>{
+    cands.add(norm(d+2*Math.PI/3));
+    cands.add(norm(d-2*Math.PI/3));
+  });
+  return [...cands];
+}
+
+// sp3 tetrahedral: project 3D tetrahedral onto 2D drawing plane
+// In 2D skeletal we approximate as ~109.5° between bonds
+// Given existing bonds, new bond is ~109.5° away from each
+function sp3Angles(vi){
+  const dirs=bondDirs(vi);
+  if(!dirs.length) return everyN(109.47);
+  const TET=109.47*Math.PI/180;
+  const cands=new Set();
+  dirs.forEach(d=>{
+    cands.add(norm(d+TET));
+    cands.add(norm(d-TET));
+  });
+  // also add the 60°-zigzag options as fallback so user can always extend
+  everyN(60).forEach(a=>cands.add(norm(a)));
+  return [...cands];
+}
+
+function norm(a){ return ((a%(2*Math.PI))+(2*Math.PI))%(2*Math.PI); }
+
+// Snap drag direction to nearest valid angle, return endpoint
+function snapTo(fromX,fromY,toX,toY,startVi){
+  const dx=toX-fromX, dy=toY-fromY;
+  const dragAngle=Math.atan2(dy,dx);
+  const cands=getSnapAngles(startVi);
+  let best=cands[0], bestDiff=Infinity;
+  cands.forEach(a=>{
+    let diff=Math.abs(norm(dragAngle)-norm(a));
+    if(diff>Math.PI) diff=2*Math.PI-diff;
+    if(diff<bestDiff){bestDiff=diff;best=a;}
+  });
+  return {x:fromX+Math.cos(best)*BOND_LEN, y:fromY+Math.sin(best)*BOND_LEN};
+}
+
+let verts=[], edges=[], history=[];
+let selAtom="C", bondOrder=1, toolMode="draw";
+let dragging=false, dragStart=null, dragX=0, dragY=0;
+let hoveredVert=-1, movingVert=-1, moveOff={x:0,y:0};
+let score=0, streak=0, bestScore=0;
+let foundSigs=[], foundStructures=[];
+let currentIdx=0;
+
+const cvs=document.getElementById("mc");
+const ctx=cvs.getContext("2d");
+
+function resizeCvs(){
+  const w=cvs.parentElement.clientWidth;
+  cvs.width=w; cvs.style.width=w+"px";
+  render();
+}
+
+// ─── POPULATE SELECT ─────────────────────────────────────────────────────────
+const fpick=document.getElementById("fpick");
+DB.forEach((d,i)=>{
+  const o=document.createElement("option");
+  o.value=i; o.textContent=`${d.lbl} — ${d.name} (${d.tot})`;
+  fpick.appendChild(o);
+});
+
+function loadIdx(i){
+  currentIdx=i; fpick.value=i;
+  verts=[]; edges=[]; history=[]; foundSigs=[]; foundStructures=[];
+  const d=DB[i];
+  document.getElementById("f-display").textContent=d.lbl;
+  document.getElementById("f-hint").textContent=`${d.name} — ${d.tot} isomer${d.tot>1?"s":""}`;
+  document.getElementById("f-tag").textContent=d.tag;
+  document.getElementById("sb-f").textContent=d.lbl;
+  document.getElementById("sb-t").textContent=d.tot;
+  document.getElementById("thumbs").innerHTML="";
+  document.getElementById("empty-msg").style.display="block";
+  updateProgress();
+  setFb("Draw a bond-line structure for "+d.lbl+" — carbons are implicit at every vertex.","");
+  render(); updateLiveCounts();
+}
+function loadSel(){ loadIdx(parseInt(fpick.value)); }
+function loadRand(){ loadIdx(Math.floor(Math.random()*DB.length)); }
+
+// ─── CANVAS EVENTS ───────────────────────────────────────────────────────────
+function getPos(e){
+  const r=cvs.getBoundingClientRect();
+  const sx=cvs.width/r.width, sy=cvs.height/r.height;
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  const cy=e.touches?e.touches[0].clientY:e.clientY;
+  return {x:(cx-r.left)*sx, y:(cy-r.top)*sy};
+}
+
+function nearestVert(x,y,excludeIdx=-1){
+  let best=-1, bestD=Infinity;
+  verts.forEach((v,i)=>{ if(i===excludeIdx) return; const d=Math.hypot(v.x-x,v.y-y); if(d<bestD){bestD=d;best=i;} });
+  return bestD<VERTEX_R*2.8 ? best : -1;
+}
+
+cvs.addEventListener("mousedown",e=>onDown(e));
+cvs.addEventListener("touchstart",e=>{e.preventDefault();onDown(e);},{passive:false});
+cvs.addEventListener("mousemove",e=>onMove(e));
+cvs.addEventListener("touchmove",e=>{e.preventDefault();onMove(e);},{passive:false});
+cvs.addEventListener("mouseup",e=>onUp(e));
+cvs.addEventListener("touchend",e=>{e.preventDefault();onUp(e);},{passive:false});
+
+function onDown(e){
+  const p=getPos(e);
+  const vi=nearestVert(p.x,p.y);
+  if(toolMode==="erase"){
+    if(vi!==-1){ deleteVert(vi); return; }
+    const ei=nearestEdge(p.x,p.y);
+    if(ei!==-1){ pushHistory(); edges.splice(ei,1); render(); updateLiveCounts(); }
+    return;
+  }
+  if(toolMode==="move"){
+    if(vi!==-1){ movingVert=vi; moveOff={x:p.x-verts[vi].x,y:p.y-verts[vi].y}; }
+    return;
+  }
+  dragging=true;
+  dragStart=vi!==-1 ? {x:verts[vi].x,y:verts[vi].y,vi} : {x:p.x,y:p.y,vi:-1};
+  dragX=p.x; dragY=p.y;
+}
+
+function onMove(e){
+  const p=getPos(e);
+  if(movingVert!==-1){ verts[movingVert].x=p.x-moveOff.x; verts[movingVert].y=p.y-moveOff.y; render(); return; }
+  if(dragging){ dragX=p.x; dragY=p.y; }
+  hoveredVert=nearestVert(p.x,p.y);
+  render();
+}
+
+function onUp(e){
+  if(movingVert!==-1){ movingVert=-1; return; }
+  if(!dragging){ return; }
+  dragging=false;
+  const p=getPos(e);
+  const fromVi=dragStart.vi;
+  const fromX=dragStart.x, fromY=dragStart.y;
+  const rawDist=Math.hypot(p.x-fromX,p.y-fromY);
+  if(rawDist<10){ render(); return; }
+
+  const snapped=snapTo(fromX,fromY,p.x,p.y,fromVi);
+  let toVi=nearestVert(snapped.x,snapped.y,fromVi);
+
+  pushHistory();
+  let startVi=fromVi;
+  if(startVi===-1){
+    verts.push({x:fromX,y:fromY,t:selAtom});
+    startVi=verts.length-1;
+  }
+  if(toVi===-1){
+    const sv=verts[startVi];
+    const snapped2=snapTo(sv.x,sv.y,p.x,p.y,startVi);
+    toVi=nearestVert(snapped2.x,snapped2.y,startVi);
+    if(toVi===-1){
+      verts.push({x:snapped2.x,y:snapped2.y,t:selAtom});
+      toVi=verts.length-1;
+    }
+  }
+  if(startVi===toVi){ render(); updateLiveCounts(); return; }
+
+  const existing=edges.findIndex(e=>(e[0]===startVi&&e[1]===toVi)||(e[0]===toVi&&e[1]===startVi));
+  if(existing!==-1){
+    // cycle: 1→2→3→1
+    edges[existing][2]=(edges[existing][2]%3)+1;
+  } else {
+    edges.push([startVi,toVi,bondOrder]);
+  }
+  render(); updateLiveCounts();
+}
+
+function nearestEdge(x,y){
+  return edges.findIndex(([i,j])=>{
+    const a=verts[i],b=verts[j];
+    if(!a||!b) return false;
+    const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
+    if(len===0) return false;
+    const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(len*len)));
+    return Math.hypot(x-(a.x+t*dx),y-(a.y+t*dy))<9;
+  });
+}
+
+function deleteVert(vi){
+  pushHistory();
+  edges=edges.filter(e=>e[0]!==vi&&e[1]!==vi).map(e=>[e[0]>vi?e[0]-1:e[0],e[1]>vi?e[1]-1:e[1],e[2]]);
+  verts.splice(vi,1);
+  render(); updateLiveCounts();
+}
+
+function pushHistory(){
+  history.push({verts:verts.map(v=>({...v})),edges:edges.map(e=>[...e])});
+  if(history.length>50) history.shift();
+}
+
+function undoLast(){
+  if(!history.length) return;
+  const prev=history.pop();
+  verts=prev.verts; edges=prev.edges;
+  render(); updateLiveCounts();
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render(){
+  const W=cvs.width, H=cvs.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="rgba(255,255,255,0.025)";
+  for(let gx=30;gx<W;gx+=50) for(let gy=25;gy<H;gy+=50){ctx.beginPath();ctx.arc(gx,gy,1,0,Math.PI*2);ctx.fill();}
+
+  drawEdges(verts,edges,ctx,false);
+
+  // snap preview while dragging
+  if(dragging&&dragStart){
+    const fx=dragStart.x,fy=dragStart.y;
+    const rawDist=Math.hypot(dragX-fx,dragY-fy);
+    if(rawDist>8){
+      const snp=snapTo(fx,fy,dragX,dragY,dragStart.vi);
+      // show all candidate angles as faint rays
+      const cands=getSnapAngles(dragStart.vi);
+      ctx.strokeStyle="rgba(184,224,0,0.08)"; ctx.lineWidth=1; ctx.setLineDash([3,6]);
+      cands.forEach(a=>{
+        ctx.beginPath(); ctx.moveTo(fx,fy);
+        ctx.lineTo(fx+Math.cos(a)*BOND_LEN,fy+Math.sin(a)*BOND_LEN); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      // active snap direction
+      ctx.strokeStyle="rgba(184,224,0,0.45)"; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(snp.x,snp.y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(snp.x,snp.y,4,0,Math.PI*2);
+      ctx.fillStyle="rgba(184,224,0,0.6)"; ctx.fill();
+    }
+  }
+
+  // vertices
+  verts.forEach((v,i)=>{
+    const isHetero=v.t!=="C";
+    const isHovered=i===hoveredVert;
+    if(isHetero){
+      const col=HETERO_COLORS[v.t]||"#ccc";
+      ctx.beginPath(); ctx.arc(v.x,v.y,13,0,Math.PI*2);
+      ctx.fillStyle="#131313"; ctx.fill();
+      ctx.font=`bold ${v.t.length>1?10:13}px 'Space Mono',monospace`;
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillStyle=col; ctx.fillText(v.t,v.x,v.y);
+    } else {
+      const degree=edges.filter(e=>e[0]===i||e[1]===i).length;
+      if(isHovered||degree===0){
+        ctx.beginPath(); ctx.arc(v.x,v.y,degree===0?4:3,0,Math.PI*2);
+        ctx.fillStyle=isHovered?"rgba(184,224,0,0.7)":"rgba(255,255,255,0.2)";
+        ctx.fill();
+      }
+      if(degree===0){
+        ctx.font="bold 12px 'Space Mono',monospace";
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillStyle="#666"; ctx.fillText("C",v.x,v.y+18);
+      }
+    }
+    if(isHovered&&toolMode==="draw"){
+      ctx.beginPath(); ctx.arc(v.x,v.y,11,0,Math.PI*2);
+      ctx.strokeStyle="rgba(184,224,0,0.5)"; ctx.lineWidth=1; ctx.stroke();
+    }
+  });
+}
+
+function drawEdges(vs,es,c,small){
+  const lw=small?1:1.8;
+  const off2=small?2.5:4.5;  // double bond offset
+  const off3=small?2:3.5;    // triple bond offset
+  const ink=small?"rgba(200,200,190,0.9)":"#c8c4bc";
+  es.forEach(([i,j,order])=>{
+    const a=vs[i],b=vs[j];
+    if(!a||!b) return;
+    const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
+    if(len===0) return;
+    const nx=-dy/len,ny=dx/len;
+    const aShort=(a.t!=="C"&&a.t!=="H")?14:(a.t==="H"?9:0);
+    const bShort=(b.t!=="C"&&b.t!=="H")?14:(b.t==="H"?9:0);
+    const ux=dx/len,uy=dy/len;
+    const ax=a.x+ux*aShort,ay=a.y+uy*aShort;
+    const bx=b.x-ux*bShort,by=b.y-uy*bShort;
+    c.strokeStyle=ink; c.lineWidth=lw; c.lineCap="round";
+    if(order===3){
+      // three parallel lines
+      c.beginPath(); c.moveTo(ax,ay); c.lineTo(bx,by); c.stroke();
+      c.beginPath(); c.moveTo(ax+nx*off3,ay+ny*off3); c.lineTo(bx+nx*off3,by+ny*off3); c.stroke();
+      c.beginPath(); c.moveTo(ax-nx*off3,ay-ny*off3); c.lineTo(bx-nx*off3,by-ny*off3); c.stroke();
+    } else if(order===2){
+      c.beginPath(); c.moveTo(ax+nx*off2,ay+ny*off2); c.lineTo(bx+nx*off2,by+ny*off2); c.stroke();
+      c.beginPath(); c.moveTo(ax-nx*off2,ay-ny*off2); c.lineTo(bx-nx*off2,by-ny*off2); c.stroke();
+    } else {
+      c.beginPath(); c.moveTo(ax,ay); c.lineTo(bx,by); c.stroke();
+    }
+  });
+}
+
+// ─── LIVE COUNTS ─────────────────────────────────────────────────────────────
+function countAtoms(){
+  const counts={};
+  verts.forEach(v=>{ counts[v.t]=(counts[v.t]||0)+1; });
+  verts.forEach((v,i)=>{
+    const val=VALENCE[v.t]||0;
+    const used=edges.filter(e=>e[0]===i||e[1]===i).reduce((s,e)=>s+e[2],0);
+    const h=Math.max(0,val-used);
+    counts["H"]=(counts["H"]||0)+h;
+  });
+  counts["C"]=counts["C"]||0;
+  return counts;
+}
+
+function parseFormula(f){
+  const c={}; const re=/([A-Z][a-z]?)(\d*)/g; let m;
+  while((m=re.exec(f))!==null&&m[1]) c[m[1]]=(c[m[1]]||0)+(parseInt(m[2])||1);
+  return c;
+}
+function formulaStr(c){
+  const ord=["C","H","N","O","S","P","Cl","Br","F","I"];
+  let s=""; ord.forEach(k=>{if(c[k])s+=k+(c[k]>1?c[k]:"");});
+  Object.keys(c).forEach(k=>{if(!ord.includes(k)&&c[k])s+=k+(c[k]>1?c[k]:"");});
+  return s;
+}
+
+function updateLiveCounts(){
+  const d=DB[currentIdx]; const tgt=parseFormula(d.f);
+  const cur=countAtoms();
+  const halogens=["Cl","Br","F","I"];
+  const tgtHal=halogens.reduce((s,k)=>s+(tgt[k]||0),0);
+  const curHal=halogens.reduce((s,k)=>s+(cur[k]||0),0);
+  function setLC(id,cv,tv){
+    const el=document.getElementById(id); el.textContent=cv;
+    el.className="lc-val "+(cv===tv?"ok":cv>tv?"hi":"lo");
+  }
+  setLC("lc-C",cur["C"]||0,tgt["C"]||0);
+  setLC("lc-H",cur["H"]||0,tgt["H"]||0);
+  setLC("lc-O",cur["O"]||0,tgt["O"]||0);
+  setLC("lc-N",cur["N"]||0,tgt["N"]||0);
+  setLC("lc-X",curHal,tgtHal);
+  let valOk=true;
+  verts.forEach((v,i)=>{
+    const val=VALENCE[v.t]||0;
+    const used=edges.filter(e=>e[0]===i||e[1]===i).reduce((s,e)=>s+e[2],0);
+    if(used>val) valOk=false;
+  });
+  const lv=document.getElementById("lc-V");
+  lv.textContent=valOk?"✓":"✗"; lv.className="lc-val "+(valOk?"ok":"hi");
+}
+
+// ─── GRAPH CANONICALIZATION ───────────────────────────────────────────────────
+function canonicalize(){
+  if(!verts.length) return "";
+  const n=verts.length;
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach(([i,j,o])=>{ adj[i].push({n:j,o}); adj[j].push({n:i,o}); });
+  function sig(node,parent,depth){
+    if(depth===0) return verts[node].t;
+    const ch=adj[node].filter(({n})=>n!==parent).map(({n,o})=>`${o}[${sig(n,node,depth-1)}]`).sort();
+    return verts[node].t+(ch.length?`(${ch.join(",")})` : "");
+  }
+  return [...Array(n).keys()].map(i=>sig(i,-1,14)).sort()[0];
+}
+
+// ─── CHECK STRUCTURE ─────────────────────────────────────────────────────────
+function checkStructure(){
+  const d=DB[currentIdx];
+  if(verts.length<2){ setFb("Draw at least one bond first.","err"); return; }
+  const cur=countAtoms(), tgt=parseFormula(d.f);
+  const a=formulaStr(cur), x=formulaStr(tgt);
+  if(a!==x){ setFb(`Formula is ${a} — need ${x}. Check your atom count (implicit H included).`,"err"); return; }
+  const n=verts.length;
+  const adj=Array.from({length:n},()=>[]);
+  edges.forEach(([i,j])=>{ adj[i].push(j); adj[j].push(i); });
+  const vis=new Array(n).fill(false);
+  const q=[0]; vis[0]=true; let cnt=1;
+  while(q.length){ const u=q.pop(); adj[u].forEach(v=>{if(!vis[v]){vis[v]=true;cnt++;q.push(v);}}); }
+  if(cnt<n){ setFb("Structure is disconnected — all atoms must form one connected molecule.","err"); return; }
+  for(let i=0;i<n;i++){
+    const val=VALENCE[verts[i].t]||0;
+    const used=edges.filter(e=>e[0]===i||e[1]===i).reduce((s,e)=>s+e[2],0);
+    if(used>val){ setFb(`Valence exceeded at ${verts[i].t} vertex ${i+1} (max ${val}, has ${used}).`,"err"); return; }
+  }
+  const sig=canonicalize();
+  if(foundSigs.includes(sig)){ setFb("You already found this connectivity — try a different structure.","err"); return; }
+  foundSigs.push(sig);
+  score+=10; streak++;
+  if(score>bestScore){ bestScore=score; document.getElementById("sb-b").textContent=bestScore; }
+  document.getElementById("score-num").textContent=score;
+  document.getElementById("sb-s").textContent=streak;
+  const isoName=d.ans[foundSigs.length-1]?.n || `Isomer ${foundSigs.length}`;
+  foundStructures.push({vs:verts.map(v=>({...v})),es:edges.map(e=>[...e]),n:isoName});
+  addThumb(foundStructures.length-1);
+  updateProgress();
+  const rem=d.tot-foundSigs.length;
+  if(rem===0) setFb(`🏆 All ${d.tot} isomers found! Score: ${score} pts`,"ok");
+  else setFb(`✓ "${isoName}" — +10 pts! ${rem} more to find.`,"ok");
+  verts=[]; edges=[]; history=[]; render(); updateLiveCounts();
+}
+
+function updateProgress(){
+  const d=DB[currentIdx];
+  const pct=d.tot>0?Math.round(foundSigs.length/d.tot*100):0;
+  document.getElementById("prog-bar").style.width=pct+"%";
+  document.getElementById("prog-lbl").textContent=`${foundSigs.length} of ${d.tot} found`;
+  if(foundStructures.length) document.getElementById("empty-msg").style.display="none";
+}
+
+// ─── THUMBNAILS ──────────────────────────────────────────────────────────────
+function addThumb(idx){
+  const s=foundStructures[idx];
+  const W=88,H=62;
+  const div=document.createElement("div"); div.className="thumb";
+  const c=document.createElement("canvas"); c.width=W; c.height=H;
+  const xs=s.vs.map(v=>v.x), ys=s.vs.map(v=>v.y);
+  const xmin=Math.min(...xs)-8,xmax=Math.max(...xs)+8;
+  const ymin=Math.min(...ys)-8,ymax=Math.max(...ys)+8;
+  const scale=Math.min((W-4)/(xmax-xmin),(H-4)/(ymax-ymin),2.2)||1;
+  const ox=W/2-(xmin+xmax)/2*scale, oy=H/2-(ymin+ymax)/2*scale;
+  const mv=s.vs.map(v=>({...v,x:v.x*scale+ox,y:v.y*scale+oy}));
+  const cc=c.getContext("2d");
+  cc.fillStyle="#131313"; cc.fillRect(0,0,W,H);
+  drawEdges(mv,s.es,cc,true);
+  mv.forEach(v=>{
+    if(v.t!=="C"){
+      const col=HETERO_COLORS[v.t]||"#ccc";
+      cc.beginPath(); cc.arc(v.x,v.y,7,0,Math.PI*2);
+      cc.fillStyle="#131313"; cc.fill();
+      cc.font=`bold ${v.t.length>1?7:9}px monospace`;
+      cc.textAlign="center"; cc.textBaseline="middle";
+      cc.fillStyle=col; cc.fillText(v.t,v.x,v.y);
+    }
+  });
+  const lbl=document.createElement("div"); lbl.className="thumb-lbl"; lbl.textContent=s.n||"isomer";
+  div.appendChild(c); div.appendChild(lbl);
+  div.addEventListener("click",()=>{ verts=s.vs.map(v=>({...v})); edges=s.es.map(e=>[...e]); render(); updateLiveCounts(); });
+  document.getElementById("thumbs").prepend(div);
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+function clearCanvas(){ pushHistory(); verts=[]; edges=[]; render(); updateLiveCounts(); setFb("Canvas cleared.",""); }
+function giveHint(){
+  const d=DB[currentIdx];
+  const rem=d.ans.slice(foundSigs.length);
+  if(!rem.length){ setFb("All found! Pick a new formula.",""); return; }
+  setFb(`Hint: ${d.hint}. Next: look for "${rem[0].n.split(" ")[0]}..."`, "info");
+}
+function showAnswers(){
+  const d=DB[currentIdx];
+  setFb(`All ${d.tot} isomers: ${d.ans.map(a=>a.n).join(" · ")}`, "info");
+  d.ans.forEach((ans,i)=>{
+    if(foundSigs.length<=i){
+      foundSigs.push("revealed_"+i);
+      foundStructures.push({vs:ans.verts,es:ans.edges,n:ans.n});
+      addThumb(foundStructures.length-1);
+    }
+  });
+  document.getElementById("prog-bar").style.width="100%";
+  document.getElementById("prog-lbl").textContent=`${d.tot} of ${d.tot} found (revealed)`;
+  document.getElementById("empty-msg").style.display="none";
+}
+
+function setFb(msg,type){
+  const fb=document.getElementById("feedback");
+  fb.className="feedback"+(type?" "+type:"");
+  fb.textContent=msg;
+}
+
+// ─── TOOLBAR ─────────────────────────────────────────────────────────────────
+document.querySelectorAll(".tbtn.atom").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tbtn.atom").forEach(b=>b.classList.remove("on"));
+    btn.classList.add("on"); selAtom=btn.dataset.atom;
+    if(toolMode!=="draw"){ toolMode="draw"; syncTool(); }
+  });
+});
+
+const bondBtns={1:"tb-single",2:"tb-double",3:"tb-triple"};
+[1,2,3].forEach(ord=>{
+  document.getElementById(bondBtns[ord]).addEventListener("click",()=>{
+    bondOrder=ord;
+    Object.values(bondBtns).forEach(id=>document.getElementById(id).classList.remove("on"));
+    document.getElementById(bondBtns[ord]).classList.add("on");
+    toolMode="draw"; syncTool();
+  });
+});
+
+// Snap mode buttons
+const snapBtns=["auto","109","120","180","60"];
+snapBtns.forEach(m=>{
+  document.getElementById("tb-snap-"+m).addEventListener("click",()=>{
+    snapMode=m;
+    snapBtns.forEach(x=>document.getElementById("tb-snap-"+x).classList.remove("on"));
+    document.getElementById("tb-snap-"+m).classList.add("on");
+  });
+});
+
+document.getElementById("tb-erase").addEventListener("click",()=>{ toolMode=toolMode==="erase"?"draw":"erase"; syncTool(); });
+document.getElementById("tb-move").addEventListener("click",()=>{ toolMode=toolMode==="move"?"draw":"move"; syncTool(); });
+document.getElementById("tb-undo").addEventListener("click",()=>undoLast());
+document.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="z"){ e.preventDefault(); undoLast(); } });
+
+function syncTool(){
+  document.getElementById("tb-erase").classList.toggle("on",toolMode==="erase");
+  document.getElementById("tb-move").classList.toggle("on",toolMode==="move");
+  if(toolMode==="draw"){
+    Object.values(bondBtns).forEach(id=>document.getElementById(id).classList.remove("on"));
+    document.getElementById(bondBtns[bondOrder]).classList.add("on");
+  }
+  cvs.style.cursor=toolMode==="move"?"grab":"crosshair";
+}
+
+// ─── PAGE NAV ─────────────────────────────────────────────────────────────────
+function nav(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
+  document.getElementById("page-"+id).classList.add("on");
+  document.querySelectorAll(".ntab").forEach(b=>b.classList.remove("on"));
+  document.querySelector(`.ntab[onclick="nav('${id}')"]`).classList.add("on");
+  if(id==="game") setTimeout(resizeCvs,60);
+}
+window.addEventListener("resize",()=>{ if(document.getElementById("page-game").classList.contains("on")) resizeCvs(); });
+
+loadIdx(0);
+setTimeout(resizeCvs,100);
+</script>
+</body>
+</html>
